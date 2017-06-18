@@ -13,6 +13,7 @@ namespace Catel.Services
     using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
+    using System.Windows.Threading;
     using MVVM;
 
     using Logging;
@@ -136,7 +137,8 @@ namespace Catel.Services
                     // Child window does not have a ShowDialog, so not null is allowed
                     bool? result = null;
 
-                    window.Dispatcher.InvokeIfRequired(() =>
+                    // ORCOMP-337: Always invoke with priority Input.
+                    DispatcherExtensions.Invoke(window.Dispatcher, () =>
                     {
                         // Safety net to prevent crashes when this is the main window
                         try
@@ -147,7 +149,7 @@ namespace Catel.Services
                         {
                             Log.Warning(ex, "An error occurred, returning null since we don't know the result");
                         }
-                    });
+                    }, DispatcherPriority.Input, false);
 
                     return result;
                 }
@@ -161,7 +163,8 @@ namespace Catel.Services
                 throw Log.ErrorAndCreateException<NotSupportedException>("Method 'Show' not found on '{0}', cannot show the window", window.GetType().Name);
             }
 
-            window.Dispatcher.InvokeIfRequired(() => showMethodInfo.Invoke(window, null));
+            // ORCOMP-337: Always invoke with priority Input.
+            DispatcherExtensions.Invoke(window.Dispatcher, () => showMethodInfo.Invoke(window, null), DispatcherPriority.Input, false);
             return null;
         }
 
